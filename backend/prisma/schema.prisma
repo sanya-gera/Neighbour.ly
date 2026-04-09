@@ -1,0 +1,92 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  googleId  String   @unique
+  name      String
+  email     String   @unique
+  avatar    String?
+  points    Int      @default(0)
+  role      Role     @default(CITIZEN)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  issues    Issue[]  @relation("ReportedIssues")
+  upvotes   Upvote[]
+  sessions  Session[]
+
+  @@map("users")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model Issue {
+  id          String      @id @default(cuid())
+  title       String
+  description String
+  category    Category
+  location    String
+  latitude    Float?
+  longitude   Float?
+  photos      String[]    @default([])
+  status      IssueStatus @default(REPORTED)
+  votes       Int         @default(0)
+  reporterId  String
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  reporter    User        @relation("ReportedIssues", fields: [reporterId], references: [id])
+  upvotes     Upvote[]
+
+  @@map("issues")
+}
+
+model Upvote {
+  id        String   @id @default(cuid())
+  issueId   String
+  userId    String
+  createdAt DateTime @default(now())
+
+  issue     Issue    @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([issueId, userId])
+  @@map("upvotes")
+}
+
+enum Role {
+  CITIZEN
+  AUTHORITY
+}
+
+enum Category {
+  ROAD
+  STREETLIGHT
+  GARBAGE
+  WATER
+  POLLUTION
+  OTHER
+}
+
+enum IssueStatus {
+  REPORTED
+  IN_PROGRESS
+  FIXED
+}
