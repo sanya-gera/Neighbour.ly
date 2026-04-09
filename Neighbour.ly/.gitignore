@@ -1,6 +1,7 @@
 # Environment variables — never commit these
 .env
 backend/.env
+Neighbour.ly/.env
 
 # Dependencies
 node_modules/
